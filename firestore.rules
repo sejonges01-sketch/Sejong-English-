@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 영어 단어 앱 학생 기록만 읽기/쓰기 허용
+    match /eng_students/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -1,0 +1,75 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read Firebase settings (google-services.json)
+        run: |
+          if [ ! -f google-services.json ]; then
+            echo "::error::google-services.json 파일이 저장소에 없습니다. Firebase에서 내려받아 저장소 첫 화면에 올려 주세요."
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          d = json.load(open('google-services.json', encoding='utf-8'))
+          pkg = 'com.sejong.sejong_english'
+          clients = [c for c in d['client']
+                     if c['client_info']['android_client_info']['package_name'] == pkg]
+          if not clients:
+              raise SystemExit('google-services.json 에 패키지 이름 ' + pkg + ' 앱이 없습니다. Firebase에 Android 앱을 이 이름으로 등록해 주세요.')
+          c = clients[0]
+          info = d['project_info']
+          vals = {
+              'firebaseApiKey': c['api_key'][0]['current_key'],
+              'firebaseAppId': c['client_info']['mobilesdk_app_id'],
+              'firebaseSenderId': info.get('project_number', ''),
+              'firebaseProjectId': info['project_id'],
+              'firebaseStorageBucket': info.get('storage_bucket', ''),
+          }
+          lines = ['// 빌드할 때 google-services.json 에서 자동으로 만든 파일']
+          for k, v in vals.items():
+              lines.append("const String %s = '%s';" % (k, v))
+          open('lib/firebase_config.dart', 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
+          print('Firebase 설정 반영 완료:', info['project_id'])
+          PY
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.9'
+          channel: stable
+          cache: true
+
+      - name: Create Android project files
+        run: |
+          flutter create --org com.sejong --project-name sejong_english --platforms android .
+          rm -rf test
+          cp -r android_overlay/. android/
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings lib
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk sejong_english.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sejong_english-apk
+          path: sejong_english.apk

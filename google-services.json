@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "958662888540",
+    "project_id": "sejong-english",
+    "storage_bucket": "sejong-english.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:958662888540:android:ca725d88dab187520eea99",
+        "android_client_info": {
+          "package_name": "com.sejong.sejong_english"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVWWHasWB42SsY0Vv58fsMnog_B3Dz6TA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
